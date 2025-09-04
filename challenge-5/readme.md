@@ -61,11 +61,19 @@ Great! Now that you've built your orchestrator in the Jupyter notebook, it's tim
    ```bash
    # Navigate to the function app directory
    cd challenge-5/azure-function-orchestrator
+
+   # Make sure dependend package are installed
+   pip install -r requirements.txt
    
    # Start the Azure Functions runtime
    func host start
    ```
    
+   When asked to choose worker runtime go for `python`
+
+   ![alt text](image.png)
+
+
    Or use the VS Code task: `func: func: host start` from the command palette (Ctrl+Shift+P).
 
 
