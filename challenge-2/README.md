@@ -31,7 +31,8 @@ In this Challenge 2, we will dedicate half of the time dedicating our time on: *
 3. Click on the `Azure AI Foundry resource`
 
 ![alt text](images/step3.png)
-4. Click on the blue button on the center part of your screen that says `Go to Azure AI Foundry Portal`
+
+4. Click on the blue button on the center part of your screen that says `Go to Azure AI Foundry Portal`   
 5. This previous step will open the Azure AI Foundry Portal also accessible through the link [ai.azure.com](ai.azure.com). On your left hand side you can find the Agents section.
  
 ![alt text](images/step6.png)
@@ -69,7 +70,7 @@ Enables integration of multiple agents, allowing them to communicate or collabor
 </div>
 </div>
 
-7. Given this information, it's time to personalize your first agent! Give it a nice name like `Policy Checker`.
+7. Given this information, it's time to personalize your first agent! Give it a nice name like `policy-checker`.
 8. Please set the `Instructions` accordingly to what you want it to do! 
 
 ```
