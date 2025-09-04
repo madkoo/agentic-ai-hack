@@ -31,6 +31,10 @@ Time to process all your documents! Please jump over to `1.document-processing.i
 
 Please make sure to carefully review all cells, as they demonstrate critical multimodal AI processing techniques.
 
+> Note:
+>  If you run into problems running the jupiter notebook with errors about missing python packages then, manually install the packages using the `requirements.txt` in the root of the repository following the below command:
+> `pip install -r ../requirements.txt`
+
 ### Part 2 - Vectorized Search Implementation
 
 Time to create your search index! Please jump over to `2.document-vectorizing.ipynb` file for a detailed implementation of:
