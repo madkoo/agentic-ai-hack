@@ -49,9 +49,11 @@ When building intelligent agents, you have two primary implementation approaches
 ## Part 1- Create your Semantic Kernel Orchestrator
 
 1. Notice we have created an `agents`folder that contains two documents: `tools.py` that (for now!) only contains the CosmosDB Plugin (which we will import for orchestration) 
-2. Notice that in the same folder we also have the `policy_checker.py` file that brins us back to challenge 2 and our first agent. Please have a look at these two files before beggining the exercise.
-3. Time to build your orchestrator! Please jump over to `orchestration.ipynb` file for a demonstration on how we will integrated our troop of agents to help us solve our pickle! 
+2. Time to build your orchestrator! Please jump over to `orchestration.ipynb` file for a demonstration on how we will integrated our troop of agents to help us solve our pickle! 
 
+This notebook is composed of only two cells of code. The first one will have in it 4 core components: 3 are dedicated to the creation of the 3 agents we have defined and the last piece is a `task` will be the orchestrator, that defines specific instructions to orchestrate the 3 agent.
+
+In Semantic Kernel's Concurrent Orchestration, [`tasks`](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/concurrent?pivots=programming-language-python#invoke-the-orchestration-1) revolve around integrating AI capabilities with traditional programming through a **modular** architecture. Core tasks include creating and managing skills (collections of related AI functions), designing and using prompts for both natural language and code generation, orchestrating planners to break down goals into executable steps, and using connectors to interface with external services like APIs or databases. Developers also manage memory for context retention, handle input/output pipelines, and coordinate execution flows that combine multiple skills or plugins. These components enable building intelligent, context-aware agents that can reason, plan, and act autonomously.
 
 ## Part 2 - Now onto automation!
 
@@ -76,116 +78,56 @@ Great! Now that you've built your orchestrator in the Jupyter notebook, it's tim
 
    Or use the VS Code task: `func: func: host start` from the command palette (Ctrl+Shift+P).
 
+Save the output values (appId, password, tenant) - you'll need them for the next steps.
 
-2.  **Testing Your Multi-Agent System**
-
-
-Now let's test each endpoint to ensure everything is working correctly. Please open another terminal and run the following commands:
-
-Test basic functionality:
+2. **Run Container Locally with Authentication**: Test the container locally with service principal credentials:
 ```bash
-curl -X GET "http://localhost:7071/api/health"
+docker run -p 8080:8000 \
+  -e AZURE_CLIENT_ID="YOUR_SERVICE_PRINCIPAL_APP_ID" \
+  -e AZURE_CLIENT_SECRET="YOUR_SERVICE_PRINCIPAL_PASSWORD" \
+  -e AZURE_TENANT_ID="YOUR_TENANT_ID" \
+  -e AI_FOUNDRY_PROJECT_ENDPOINT="YOUR_AI_FOUNDRY_ENDPOINT" \
+  -e MODEL_DEPLOYMENT_NAME="YOUR_MODEL_NAME" \
+  -e COSMOS_ENDPOINT="YOUR_COSMOS_ENDPOINT" \
+  -e COSMOS_KEY="YOUR_COSMOS_KEY" \
+  -e AZURE_AI_CONNECTION_ID="YOUR_AI_CONNECTION_ID" \
+  -e AZURE_AI_SEARCH_INDEX_NAME="YOUR_SEARCH_INDEX" \
+  -e SEARCH_SERVICE_NAME="YOUR_SEARCH_SERVICE" \
+  -e SEARCH_SERVICE_ENDPOINT="YOUR_SEARCH_ENDPOINT" \
+  -e SEARCH_ADMIN_KEY="YOUR_SEARCH_KEY" \
+  -e CLAIM_ID="CL001" \
+  -e POLICY_NUMBER="LIAB-AUTO-001" \
+  insurance-orchestrator
 ```
+Replace all the `YOUR_*` placeholders with your actual values from the `.env` file and service principal creation.
 
-Test with orchestrator initialization:
+#### Part 2 - Deploy to Azure
+
+[Container apps](https://learn.microsoft.com/en-us/azure/container-apps/overview) are an effective way to deploy and manage multi-agent orchestration systems by providing isolated, scalable environments for each agent or service. They enable agents to run independently while communicating through APIs or messaging systems, allowing for flexible coordination, fault isolation, and dynamic scaling. By using container orchestration platforms like Kubernetes or Azure Container Apps, developers can automate deployment, load balancing, and lifecycle management of complex multi-agent systems in a cloud-native, resilient architecture.
+
+In this scenario, we are deploying our multi-agent orchestrator within a **single Azure Container Apps (CA) environment**. We utilize the Azure Container Registry (ACR) created in challenge 0 to store and manage our container images, ensuring secure and efficient delivery to the CA environment. During deployment, we will pass the necessary configuration and connection details as environment variables using a `.env` file—this includes Foundry, Cosmos and Storage credentials —allowing our orchestrator and agents to access resources dynamically without hardcoding sensitive information. This setup streamlines updates, improves security, and enables seamless integration with Azure services, making our system robust and production-ready.
+
+3. **Deploy to Azure**: Now it's time to push it to the Cloud! Rename your file from `container-apps copy.sh` to `container-apps.sh`, fill the cells that have the #FILL comment and run:
 ```bash
-curl -X GET "http://localhost:7071/api/health?test_orchestrator=true"
+./container-apps.sh
 ```
 
+This script automates the complete setup of your multi-agent insurance orchestrator in production. It creates the necessary Azure resources (resource group and container environment), builds your Docker image from the local Dockerfile and pushes it to Azure Container Registry, then deploys it as a scalable container app with all required environment variables for AI Foundry, Cosmos DB, and Azure AI Search connections. The script also configures auto-scaling (0-1 replicas), sets up managed identity for secure Azure service access, and assigns the necessary permissions for your orchestrator to coordinate the three specialized insurance agents in a production-ready environment.
 
-#### 3. Process Insurance Claims
-This is the main endpoint that orchestrates your agents! # Process a specific claim (CL001)
+##### Troubleshooting Tips:
 
-```bash
-curl -X GET "http://localhost:7071/api/claim?claim_id=CL001"
-```
+- **Authentication Issues**: If you get authentication errors, ensure your service principal has the correct permissions and the environment variables are set correctly.
+- **Port Mapping**: Note that the container exposes port 8000, so use `-p 8080:8000` for local testing.
+- **Environment Variables**: Double-check that all environment variables from your `.env` file are correctly set in both local testing and the deployment script.
+- **Resource Names**: Ensure all Azure resource names are unique and follow Azure naming conventions.
+- **Quick Start**: Use the `local-test.sh` helper script for automated setup if you're new to Azure service principals.
 
-
-
-### 📊 Understanding the Response
-
-When you process a claim, you'll get a comprehensive JSON response containing:
-
-```json
-{
-  "status": "success",
-  "claim_id": "CL001",
-  "agent_analyses": [
-    {
-      "agent_name": "PolicyChecker",
-      "analysis": "Coverage analysis results..."
-    },
-    {
-      "agent_name": "ClaimReviewer", 
-      "analysis": "Claim validation results..."
-    },
-    {
-      "agent_name": "RiskAnalyzer",
-      "analysis": "Risk assessment results..."
-    }
-  ],
-  "comprehensive_analysis": "# Combined multi-agent analysis report...",
-  "timestamp": "timestamp_value"
-}
-```
-
-### 🔧 Troubleshooting
-
-**If the function app won't start:**
-1. Check that all dependencies are installed: `pip install -r requirements.txt`
-2. Verify your Azure credentials are configured
-3. Check the terminal output for specific error messages
-
-**If you get authentication errors:**
-1. Ensure your Azure credentials are properly configured
-2. Check that your environment variables are set correctly
-3. Verify your Azure AI and Cosmos DB connections
-
-**If agents aren't responding correctly:**
-1. Test the Cosmos DB connection endpoint first
-2. Check the logs in the terminal for detailed error messages
-3. Verify your AI model deployments are active
-
-### 🎯 Success Indicators
-
-You'll know your system is working correctly when:
-- ✅ Health check returns `"status": "healthy"`
-- ✅ Cosmos DB test shows available claim IDs
-- ✅ Claim processing returns analysis from all three agents
-- ✅ Each agent provides specialized analysis (policy coverage, claim validation, risk assessment)
-- ✅ The comprehensive analysis combines all agent outputs
-
-### 📈 Testing Different Scenarios
-
-Try processing different claim IDs to see how your agents handle various scenarios:
-```bash
-# Test different claims to see varied responses
-curl -X GET "http://localhost:7071/api/claim?claim_id=CL002"
-curl -X GET "http://localhost:7071/api/claim?claim_id=CL003"
-curl -X GET "http://localhost:7071/api/claim?claim_id=CL004"
-```
-
-**What to Look For:**
-- Different risk levels across claims
-- Varying policy coverage decisions
-- Different claim validation outcomes
-- How agents handle different types of incidents
-
-Once you've tested your multi-agent orchestrator locally and confirmed it's working correctly, the next logical step would be to deploy it to Azure for production use. This involves deploying your Azure Function app to Azure Functions in the cloud, which provides enterprise-grade scalability, monitoring, and security features. You would typically use the Azure CLI or Azure DevOps pipelines to deploy your function code, configure environment variables for your Azure AI and Cosmos DB connections, and set up proper monitoring and logging. Azure Functions offers automatic scaling based on demand, built-in authentication and authorization, and seamless integration with other Azure services your agents depend on. Additionally, you could configure Application Insights for detailed telemetry and performance monitoring of your multi-agent system in production.
-
-## Part 3 - Start the integration of several tools with ... MCP Server! 
-
-Now that you have a fully functional multi-agent orchestrator running as an Azure Function, you can extend its capabilities by exposing it as a Model Context Protocol (MCP) server. This allows your insurance claim processing agents to be consumed by AI assistants, development tools, and other applications that support MCP. By leveraging [Azure Functions MCP bindings](https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-mcp?pivots=programming-language-python), you can transform your orchestrator into a standardized tool that AI models can discover and use dynamically. The MCP server would expose your agents' capabilities as structured tools - for example, a "process_insurance_claim" tool that accepts claim IDs and returns comprehensive analyses. To make this production-ready, you'd deploy your function behind Azure API Management (APIM) to provide enterprise features like authentication, rate limiting, API versioning, and detailed analytics. APIM acts as a gateway that can transform your function endpoints into MCP-compatible interfaces while providing security policies and monitoring. You can reference the [Azure MCP Functions Python samples](https://github.com/Azure-Samples/remote-mcp-functions-python) to see how to structure your function for MCP compatibility, including proper tool definitions, parameter schemas, and response formatting that AI assistants can understand and utilize effectively.
-
-###  Challenge Yourself!
-
-Pick 1-2 expansion ideas and implement them in your system. Consider:
-- Which expansion would have the biggest impact on your insurance use case?
-- How can you measure the success of your new capabilities?
-- What additional data sources or APIs would make your agents even smarter?
-- How might you handle errors or edge cases in your expanded system?
-
-**Pro Tip:** Start with one simple expansion before moving to more complex orchestration patterns!
+### 📁 File Summary:
+- `local-test.sh` - Helper script for service principal creation and local testing
+- `container-apps.sh` - Production deployment script (rename from container-apps copy.sh)
+- `Dockerfile` - Container configuration 
+- `orchestration.py` - Production orchestrator code
+- `requirements.txt` - Python dependencies
 
 
 ## 🎯 Conclusion
@@ -197,4 +139,4 @@ Congratulations! You've successfully built a multi-agent orchestration system th
 - Created a Master Orchestrator that synthesizes outputs from multiple agents
 - Built hybrid solutions combining Azure AI Agent Service with custom Semantic Kernel plugins
 - Developed a production-ready framework for intelligent insurance claim processing
-- Prepared the system for enterprise deployment to Azure Functions with scalability and monitoring capabilities
+- Prepared the system for enterprise deployment to an Azure Container App with scalability and monitoring capabilities
